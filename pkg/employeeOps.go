@@ -46,3 +46,26 @@ func AddEmployee(emp *models.Employee) error {
 	}
 	return nil
 }
+func FindEmployee(id string) (models.Employee, error) {
+	fileLock.Lock()
+	defer fileLock.Unlock()
+
+	rawContents, err := os.ReadFile(EmployeeFile)
+	if err != nil {
+		return models.Employee{}, fmt.Errorf("error while reading employee file: %s", err.Error())
+	}
+
+	emps := make([]models.Employee, 0)
+	err = json.Unmarshal(rawContents, &emps)
+	if err != nil {
+		return models.Employee{}, fmt.Errorf("error while unmarshalling employee file contents: %s", err.Error())
+	}
+
+	for _, emp := range emps {
+		if emp.ID == id {
+			return emp, nil
+		}
+	}
+
+	return models.Employee{}, fmt.Errorf("employee with id %s not found", id)
+}

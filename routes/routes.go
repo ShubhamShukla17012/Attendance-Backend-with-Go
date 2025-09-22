@@ -76,18 +76,10 @@ func GetAllEmployeeHandler(w http.ResponseWriter, r *http.Request) {
 func GetEmployeeHandler(w http.ResponseWriter, r *http.Request) {
 	ID := r.PathValue("id")
 	fmt.Println(ID)
-	// data, err := os.ReadFile("employees.json")
-	// if err != nil {
-	// 	http.Error(w, fmt.Sprintf("Error reading file: %v", err), http.StatusInternalServerError)
-	// 	return
-	// }
-
-	// var emp1  models.Employee
-	// json.Unmarshal(data,&emp1)
-	// for {
-	// 	 {
-
-	// 	}
-	// }
-
+	emp, err := pkg.FindEmployee(ID)
+	fmt.Print(err)
+	w.WriteHeader(http.StatusOK)
+	w.Write(emp.Jsonify())
 }
+
+// TODO:: write Delete Employee By ID
