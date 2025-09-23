@@ -3,6 +3,7 @@ package routes
 import (
 	"attandance/models"
 	"attandance/pkg"
+	"attandance/utils"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -59,7 +60,7 @@ func CreateEmployeeHandler(w http.ResponseWriter, r *http.Request) {
 
 // send all employees to User
 func GetAllEmployeeHandler(w http.ResponseWriter, r *http.Request) {
-	data, err := os.ReadFile("employees.json")
+	data, err := os.ReadFile(utils.EmployeeFile)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error reading file: %v", err), http.StatusInternalServerError)
 		return
@@ -73,9 +74,10 @@ func GetAllEmployeeHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write(data)
 }
+
+// get employee by id
 func GetEmployeeHandler(w http.ResponseWriter, r *http.Request) {
 	ID := r.PathValue("id")
-	fmt.Println(ID)
 	emp, err := pkg.FindEmployee(ID)
 	fmt.Print(err)
 	w.WriteHeader(http.StatusOK)
@@ -83,3 +85,41 @@ func GetEmployeeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // TODO:: write Delete Employee By ID
+func DeleteEmployee(w http.ResponseWriter, r *http.Request) {
+	empID := r.PathValue("id")
+	employeesData, err := os.ReadFile(utils.EmployeeFile)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error reading file: %v", err), http.StatusInternalServerError)
+		return
+	}
+	var employees []models.Employee
+
+	if err := json.Unmarshal(employeesData, &employees); err != nil {
+		http.Error(w, "Error parsing employee data", http.StatusInternalServerError)
+		return
+	}
+	updatedEmployees := []models.Employee{}
+	found := false
+	for _, emp := range employees {
+		if emp.ID != empID {
+			updatedEmployees = append(updatedEmployees, emp)
+		} else {
+			found = true
+		}
+	}
+	if !found {
+		http.Error(w, "Employee not found", http.StatusNotFound)
+		return
+	}
+	updatedData, err := json.MarshalIndent(updatedEmployees, "", "  ")
+	if err != nil {
+		http.Error(w, "Error writing updated data", http.StatusInternalServerError)
+		return
+	}
+	if err := os.WriteFile(utils.EmployeeFile, updatedData, 0644); err != nil {
+		http.Error(w, "Error saving updated file", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+
+}
