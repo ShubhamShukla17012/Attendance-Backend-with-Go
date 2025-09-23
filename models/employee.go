@@ -10,8 +10,8 @@ type Employee struct {
 	ID         string    `json:"id"`
 	Name       string    `json:"name"`
 	Grade      string    `json:"grade"`
-	LogInTime  time.Time `json:"log_out_time,omitempty"`
-	LogOutTime time.Time `json:"log_in_time,omitempty"`
+	LogInTime  time.Time `json:"log_in_time"`
+	LogOutTime time.Time `json:"log_out_time"`
 }
 
 func (e *Employee) Jsonify() []byte {

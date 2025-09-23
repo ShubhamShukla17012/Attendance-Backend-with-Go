@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -79,12 +80,14 @@ func GetAllEmployeeHandler(w http.ResponseWriter, r *http.Request) {
 func GetEmployeeHandler(w http.ResponseWriter, r *http.Request) {
 	ID := r.PathValue("id")
 	emp, err := pkg.FindEmployee(ID)
-	fmt.Print(err)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("User not Found :%v", err), http.StatusBadRequest)
+	}
 	w.WriteHeader(http.StatusOK)
 	w.Write(emp.Jsonify())
 }
 
-// TODO:: write Delete Employee By ID
+// Delete Employee By ID
 func DeleteEmployee(w http.ResponseWriter, r *http.Request) {
 	empID := r.PathValue("id")
 	employeesData, err := os.ReadFile(utils.EmployeeFile)
@@ -122,4 +125,108 @@ func DeleteEmployee(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 
+}
+
+// update login time
+func LoginHandler(w http.ResponseWriter, r *http.Request) {
+	empID := r.PathValue("id")
+
+	// Read employee data from file
+	employeeData, err := utils.FileReadOpration()
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error reading file: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	var employees []models.Employee
+	err = json.Unmarshal(employeeData, &employees)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error unmarshalling data: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Flag to check if employee was found
+	found := false
+
+	// Update login time
+	for i := range employees {
+		if employees[i].ID == empID {
+			employees[i].LogInTime = time.Now()
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		http.Error(w, "Employee not found", http.StatusNotFound)
+		return
+	}
+
+	// Marshal updated data
+	updatedData, err := json.MarshalIndent(employees, "", "  ")
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error marshalling updated data: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Write back to file
+	err = os.WriteFile(utils.EmployeeFile, updatedData, 0666)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error writing to file: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Login time updated successfully"))
+}
+func LogOutHandler(w http.ResponseWriter, r *http.Request) {
+	empID := r.PathValue("id")
+
+	// Read employee data from file
+	employeeData, err := utils.FileReadOpration()
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error reading file: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	var employees []models.Employee
+	err = json.Unmarshal(employeeData, &employees)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error unmarshalling data: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Flag to check if employee was found
+	found := false
+
+	// Update logout time
+	for i := range employees {
+		if employees[i].ID == empID {
+			employees[i].LogOutTime = time.Now()
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		http.Error(w, "Employee not found", http.StatusNotFound)
+		return
+	}
+
+	// Marshal updated data
+	updatedData, err := json.MarshalIndent(employees, "", "  ")
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error marshalling updated data: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Write back to file
+	err = os.WriteFile(utils.EmployeeFile, updatedData, 0666)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error writing to file: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Logout time updated successfully"))
 }

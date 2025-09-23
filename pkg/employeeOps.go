@@ -33,6 +33,8 @@ func AddEmployee(emp *models.Employee) error {
 	}
 	return nil
 }
+
+// find employee by Id
 func FindEmployee(id string) (models.Employee, error) {
 	rawContents, err := utils.FileReadOpration()
 	if err != nil {
