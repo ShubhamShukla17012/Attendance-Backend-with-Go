@@ -2,17 +2,28 @@ package pkg
 
 import (
 	"attandance/models"
-	"attandance/utils"
+
 	"encoding/json"
 	"fmt"
 	"os"
+	"sync"
+)
+
+const (
+	EmployeeFile string = "employees.json"
+)
+
+var (
+	fileLock sync.RWMutex = sync.RWMutex{}
 )
 
 /*
 Adds employee to file.
 */
 func AddEmployee(emp *models.Employee) error {
-	rawContents, err := utils.FileReadOpration()
+	fileLock.Lock()
+	defer fileLock.Unlock()
+	rawContents, err := os.ReadFile(EmployeeFile)
 	if err != nil {
 		return fmt.Errorf("error while reading employee file, err : %s", err.Error())
 	}
@@ -27,7 +38,7 @@ func AddEmployee(emp *models.Employee) error {
 	if err != nil {
 		return fmt.Errorf("error while marshalling employee file contents, err : %s", err.Error())
 	}
-	err = os.WriteFile(utils.EmployeeFile, fc, os.FileMode(0666))
+	err = os.WriteFile(EmployeeFile, fc, os.FileMode(0666))
 	if err != nil {
 		return fmt.Errorf("error while writing employee file contents, err : %s", err.Error())
 	}
@@ -36,7 +47,9 @@ func AddEmployee(emp *models.Employee) error {
 
 // find employee by Id
 func FindEmployee(id string) (models.Employee, error) {
-	rawContents, err := utils.FileReadOpration()
+	fileLock.RLock()
+	defer fileLock.RUnlock()
+	rawContents, err := os.ReadFile(EmployeeFile)
 	if err != nil {
 		return models.Employee{}, fmt.Errorf("error while reading employee file: %s", err.Error())
 	}
